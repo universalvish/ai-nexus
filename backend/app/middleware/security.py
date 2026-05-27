@@ -136,10 +136,10 @@ def setup_cors(app):
     """Configure CORS middleware."""
     app.add_middleware(
         FastAPICORSMiddleware,
-        allow_origins=settings.allowed_origins,
-        allow_credentials=True,
+        allow_origins=["*"],
+        allow_credentials=False,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
+        allow_headers=["*"],
         expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining"],
         max_age=3600,
     )

@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # CORS
-    allowed_origins: List[str] = ["http://localhost:3000"]
+    allowed_origins: List[str] = ["http://localhost:3000", "https://*.vercel.app"]
 
     # Database
     database_url: str = "postgresql+asyncpg://user:password@localhost:5432/ainexus"
