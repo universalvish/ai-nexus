@@ -1,0 +1,249 @@
+version: '3.9'
+
+# ============================================
+# AI NEXUS - Secure Docker Compose
+# ============================================
+# Production-ready configuration with:
+# - Isolated networks
+# - Resource limits
+# - Health checks
+# - Secure defaults
+# ============================================
+
+services:
+  # ===========================================
+  # PostgreSQL Database (Production uses Supabase,
+  # this is for local development only)
+  # ===========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: ainnexus-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ainnexus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-ainnexus}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "127.0.0.1:5432:5432"  # Bind to localhost only!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ainnexus}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+
+  # ===========================================
+  # Redis Cache (Production uses managed Redis)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: ainnexus-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    ports:
+      - "127.0.0.1:6379:6379"  # Bind to localhost only!
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+
+  # ===========================================
+  # Backend API Service
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        - PYTHONUNBUFFERED=1
+    container_name: ainnexus-backend
+    environment:
+      # Application
+      - APP_NAME=AI Nexus
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      
+      # Database
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ainnexus}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ainnexus}
+      
+      # Redis
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      
+      # Security
+      - SECRET_KEY=${SECRET_KEY}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      
+      # CORS - Only allow frontend
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      
+      # Rate Limiting
+      - RATE_LIMIT_PER_MINUTE=60
+    ports:
+      - "127.0.0.1:8000:8000"  # Bind to localhost only for dev!
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - frontend
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    read_only: false  # Set to true in production for additional security
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+
+  # ===========================================
+  # Frontend (Production uses Vercel)
+  # ===========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    container_name: ainnexus-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000/api/v1}
+      - NEXT_PUBLIC_APP_NAME=AI Nexus
+      - NODE_ENV=production
+    ports:
+      - "127.0.0.1:3000:3000"  # Bind to localhost only!
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    networks:
+      - frontend
+    security_opt:
+      - no-new-privileges:true
+
+  # ===========================================
+  # Nginx Reverse Proxy (Production uses Cloudflare)
+  # ===========================================
+  nginx:
+    image: nginx:alpine
+    container_name: ainnexus-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro  # SSL certificates
+    depends_on:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    networks:
+      - frontend
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+
+# ===========================================
+# Networks - Isolated for security
+# ===========================================
+networks:
+  frontend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-frontend
+  backend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-backend
+    internal: true  # No external access to backend network
+
+# ===========================================
+# Volumes - Persistent data
+# ===========================================
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/postgres
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/redis
+
+# ===========================================
+# Secrets (use Docker secrets in production)
+# ===========================================
+# secrets:
+#   db_password:
+#     file: ./secrets/db_password.txt
+#   redis_password:
+#     file: ./secrets/redis_password.txt
+#   secret_key:
+#     file: ./secrets/secret_key.txt

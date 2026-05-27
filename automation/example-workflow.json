@@ -1,0 +1,24 @@
+{
+  "name": "customer-support-automation",
+  "trigger": {
+    "type": "webhook",
+    "path": "support-ticket"
+  },
+  "agents": [
+    {
+      "name": "Ticket Classifier",
+      "type": "customer_support",
+      "task": "Classify tickets as billing, technical, general, or urgent"
+    },
+    {
+      "name": "Response Generator",
+      "type": "customer_support",
+      "task": "Generate appropriate AI responses based on category"
+    }
+  ],
+  "workflow": [
+    { "step": 1, "action": "classify", "next": "route" },
+    { "step": 2, "action": "route", "conditions": ["urgent", "billing", "technical", "general"] },
+    { "step": 3, "action": "respond", "using": "Response Generator" }
+  ]
+}

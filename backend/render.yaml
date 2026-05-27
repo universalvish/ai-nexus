@@ -1,0 +1,46 @@
+{
+  "deploy": {
+    "startCommand": "pip install -r requirements.txt && gunicorn app.main:app --bind 0.0.0.0:$PORT --workers 2 --worker-class uvicorn.workers.UvicornWorker",
+    "env": "python",
+    "region": "oregon"
+  },
+  "regions": ["oregon", "frankfurt", "singapore"],
+  "startCommand": "gunicorn app.main:app --bind 0.0.0.0:$PORT --workers 2",
+  "env": {
+    "PYTHON_VERSION": "3.11",
+    "ENVIRONMENT": "production",
+    "DEBUG": "false"
+  },
+  "headers": [
+    {
+      "path": "/*",
+      "name": "X-Frame-Options",
+      "value": "DENY"
+    },
+    {
+      "path": "/*",
+      "name": "X-Content-Type-Options",
+      "value": "nosniff"
+    },
+    {
+      "path": "/*",
+      "name": "X-XSS-Protection",
+      "value": "1; mode=block"
+    },
+    {
+      "path": "/*",
+      "name": "Referrer-Policy",
+      "value": "strict-origin-when-cross-origin"
+    }
+  ],
+  "healthCheckPath": "/health",
+  "services": [
+    {
+      "type": "web",
+      "name": "ai-nexus-api",
+      "env": "python",
+      "region": "oregon",
+      "plan": "free"
+    }
+  ]
+}
