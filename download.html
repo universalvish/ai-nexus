@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Nexus - Download Package</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 600px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            color: #6366f1;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #a855f7;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            padding: 18px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 15px 0;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
+        }
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            text-align: left;
+        }
+        .info h3 {
+            color: #22c55e;
+            margin-bottom: 15px;
+        }
+        .info ol {
+            color: #cbd5e1;
+            line-height: 2;
+            padding-left: 20px;
+        }
+        .info code {
+            background: rgba(99, 102, 241, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .warning {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            border-radius: 10px;
+            color: #fbbf24;
+        }
+        .files-count {
+            color: #22c55e;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 AI NEXUS</h1>
+        <h2>Enterprise AI SaaS Platform</h2>
+        <p class="subtitle">Complete production-ready codebase with 94 files</p>
+        
+        <a href="/download/ai-nexus-complete.tar.gz" class="download-btn">
+            ⬇️ Download Complete Package
+        </a>
+        
+        <p class="files-count">📦 94 files • ~137KB compressed</p>
+        
+        <div class="info">
+            <h3>📋 Quick Setup Instructions:</h3>
+            <ol>
+                <li>Extract: <code>tar -xzf ai-nexus-complete.tar.gz</code></li>
+                <li>Create GitHub repo: <code>github.com/new</code> (name: ai-nexus, Private ✅)</li>
+                <li>Push code: <code>git push -u origin master</code></li>
+                <li>Add secrets in GitHub Settings > Secrets</li>
+                <li>Deploy to Vercel (frontend) & Render (backend)</li>
+            </ol>
+        </div>
+        
+        <div class="warning">
+            ⚠️ Run: <code>git remote set-url origin https://YOUR_TOKEN@github.com/universalvish/ai-nexus.git</code>
+            <br>Replace YOUR_TOKEN with a GitHub Personal Access Token with 'repo' scope
+        </div>
+    </div>
+</body>
+</html>
